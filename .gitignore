@@ -1,0 +1,13 @@
+.idea/ATOgen.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+app/__pycache__/__init__.cpython-313.pyc
+app/__pycache__/exporter.cpython-313.pyc
+app/__pycache__/models.cpython-313.pyc
+app/__pycache__/storage.cpython-313.pyc
+data/atos.json
+data/atos.json
+streamlit_app.py
+.idea/workspace.xml
