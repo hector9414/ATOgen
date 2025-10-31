@@ -4,7 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from datetime import datetime, date, time
+from typing import Any, Callable, Dict, List, Tuple
 
 import streamlit as st
 
@@ -14,6 +15,46 @@ from app.storage import ATOStorage
 
 DATA_PATH = Path("data/atos.json")
 storage = ATOStorage(DATA_PATH)
+
+MONTH_OPTIONS = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+]
+
+TIMEFRAME_FORMAT = "%d%H%MZ%b%Y"
+
+
+def _parse_timeframe_value(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, TIMEFRAME_FORMAT)
+    except ValueError:
+        return None
+
+
+def _timeframe_defaults(value: str | None) -> Tuple[date, time]:
+    parsed = _parse_timeframe_value(value)
+    if parsed:
+        parsed_time = parsed.time().replace(second=0, microsecond=0)
+        return parsed.date(), parsed_time
+    now = datetime.utcnow().replace(second=0, microsecond=0)
+    return now.date(), now.time()
+
+
+def _format_timeframe_value(selected_date: date, selected_time: time) -> str:
+    combined = datetime.combine(selected_date, selected_time).replace(second=0, microsecond=0)
+    return combined.strftime(TIMEFRAME_FORMAT).upper()
 
 
 def ensure_state() -> None:
@@ -33,7 +74,7 @@ def start_new_ato() -> None:
 
 def start_new_ato_and_rerun() -> None:
     start_new_ato()
-    st.experimental_rerun()
+    st.rerun()
 
 
 def edit_ato(ato_id: str) -> None:
@@ -55,7 +96,7 @@ def cancel_edit() -> None:
 
 def cancel_edit_and_rerun() -> None:
     cancel_edit()
-    st.experimental_rerun()
+    st.rerun()
 
 
 def duplicate_ato(ato_id: str) -> None:
@@ -92,23 +133,68 @@ def _render_header_step(data: Dict[str, Any]) -> None:
     st.markdown("### Paso 1 · Header")
     data["name"] = st.text_input("Nombre del ATO", value=data.get("name", ""))
     header = data.setdefault("header", {})
-    header["title"] = st.text_input("Título", value=header.get("title", ""))
-    header["classification"] = st.text_input(
-        "Clasificación", value=header.get("classification", "")
+    header["operation_identification_data"] = st.text_input(
+        "OPER - Operation Identification Data",
+        value=header.get("operation_identification_data", ""),
     )
-    header["operation_name"] = st.text_input(
-        "Nombre de la operación", value=header.get("operation_name", "")
+
+    st.markdown("#### MSGID - Message Identification")
+    msg_cols = st.columns(3)
+    header["msg_text_format_identifier"] = msg_cols[0].text_input(
+        "Text Format Identifier",
+        value=header.get("msg_text_format_identifier", "ATO"),
     )
-    header["originating_unit"] = st.text_input(
-        "Unidad originadora", value=header.get("originating_unit", "")
+    header["msg_originator"] = msg_cols[1].text_input(
+        "Originator",
+        value=header.get("msg_originator", ""),
     )
-    header["effective_time_utc"] = st.text_input(
-        "Inicio (UTC) [ISO 8601]", value=header.get("effective_time_utc", "")
+    header["msg_serial"] = msg_cols[2].text_input(
+        "Message Serial",
+        value=header.get("msg_serial", ""),
     )
-    header["expiry_time_utc"] = st.text_input(
-        "Fin (UTC) [ISO 8601]", value=header.get("expiry_time_utc", "")
+
+    msg_cols2 = st.columns(2)
+    stored_month = (header.get("msg_month") or MONTH_OPTIONS[0]).upper()
+    month_index = MONTH_OPTIONS.index(stored_month) if stored_month in MONTH_OPTIONS else 0
+    header["msg_month"] = msg_cols2[0].selectbox(
+        "Month (MMM)",
+        options=MONTH_OPTIONS,
+        index=month_index,
     )
-    header["remarks"] = st.text_area("Observaciones", value=header.get("remarks", ""))
+    header["msg_qualifier"] = msg_cols2[1].text_input(
+        "Qualifier",
+        value=header.get("msg_qualifier", ""),
+    )
+
+    ack_default = header.get("acknowledgement_required", "NO").upper()
+    header["acknowledgement_required"] = st.radio(
+        "AKNLDG - ¿Requiere acuse de recibo?",
+        options=["YES", "NO"],
+        index=0 if ack_default == "YES" else 1,
+        horizontal=True,
+    )
+
+    st.markdown("#### TIMEFRAM - Effective Day-Time Frame (UTC)")
+    from_date_default, from_time_default = _timeframe_defaults(header.get("timeframe_from"))
+    to_date_default, to_time_default = _timeframe_defaults(header.get("timeframe_to"))
+    from_cols = st.columns(2)
+    from_date_selected = from_cols[0].date_input("FROM - Fecha", value=from_date_default)
+    from_time_selected = from_cols[1].time_input("FROM - Hora", value=from_time_default)
+    header["timeframe_from"] = _format_timeframe_value(from_date_selected, from_time_selected)
+
+    to_cols = st.columns(2)
+    to_date_selected = to_cols[0].date_input("TO - Fecha", value=to_date_default)
+    to_time_selected = to_cols[1].time_input("TO - Hora", value=to_time_default)
+    header["timeframe_to"] = _format_timeframe_value(to_date_selected, to_time_selected)
+
+    heading_options = ["TASKING"]
+    heading_value = header.get("heading", "TASKING")
+    heading_index = heading_options.index(heading_value) if heading_value in heading_options else 0
+    header["heading"] = st.selectbox(
+        "HEADING - Segmento del mensaje",
+        options=heading_options,
+        index=heading_index,
+    )
 
 
 def _render_allotments_step(data: Dict[str, Any]) -> None:
@@ -135,10 +221,10 @@ def _render_allotments_step(data: Dict[str, Any]) -> None:
             )
             if st.button("Eliminar recurso", key=f"allot_del_{idx}"):
                 allotments.pop(idx)
-                st.experimental_rerun()
+                st.rerun()
     if st.button("Agregar recurso", key="allot_add"):
         allotments.append({"resource_name": "", "quantity": "", "mission": "", "remarks": ""})
-        st.experimental_rerun()
+        st.rerun()
 
 
 def _render_task_units_step(data: Dict[str, Any]) -> None:
@@ -185,7 +271,7 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
             )
             if st.button("Eliminar Task Unit", key=f"tu_del_{idx}"):
                 task_units.pop(idx)
-                st.experimental_rerun()
+                st.rerun()
     if st.button("Agregar Task Unit", key="tu_add"):
         task_units.append(
             {
@@ -201,7 +287,7 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
                 "remarks": "",
             }
         )
-        st.experimental_rerun()
+        st.rerun()
 
 
 def _render_support_step(data: Dict[str, Any]) -> None:
@@ -231,10 +317,10 @@ def _render_support_step(data: Dict[str, Any]) -> None:
             )
             if st.button("Eliminar soporte", key=f"sc_del_{idx}"):
                 entries.pop(idx)
-                st.experimental_rerun()
+                st.rerun()
     if st.button("Agregar soporte", key="sc_add"):
         entries.append({"role": "", "unit": "", "frequency": "", "contact": "", "notes": ""})
-        st.experimental_rerun()
+        st.rerun()
 
 
 def _render_spins_step(data: Dict[str, Any]) -> None:
@@ -254,10 +340,10 @@ def _render_spins_step(data: Dict[str, Any]) -> None:
             )
             if st.button("Eliminar SPIN", key=f"spin_del_{idx}"):
                 entries.pop(idx)
-                st.experimental_rerun()
+                st.rerun()
     if st.button("Agregar SPIN", key="spin_add"):
         entries.append({"title": "", "content": ""})
-        st.experimental_rerun()
+        st.rerun()
 
 
 def _render_footer_step(data: Dict[str, Any]) -> None:
@@ -307,19 +393,19 @@ def show_list_view() -> None:
         with st.container():
             st.subheader(ato.name)
             st.markdown(
-                f"**Clasificación:** {ato.header.classification or 'N/A'}  \
-**Vigencia:** {ato.header.effective_time_utc} → {ato.header.expiry_time_utc}"
+                f"**AKNLDG:** {ato.header.acknowledgement_required or 'NO'}  \n"
+                f"**Vigencia:** {ato.header.timeframe_from} → {ato.header.timeframe_to}"
             )
             cols = st.columns(5)
             if cols[0].button("Editar", key=f"edit_{ato.id}"):
                 edit_ato(ato.id)
-                st.experimental_rerun()
+                st.rerun()
             if cols[1].button("Duplicar", key=f"dup_{ato.id}"):
                 duplicate_ato(ato.id)
-                st.experimental_rerun()
+                st.rerun()
             if cols[2].button("Eliminar", key=f"del_{ato.id}"):
                 delete_ato(ato.id)
-                st.experimental_rerun()
+                st.rerun()
             exported = export_ato_to_text(ato)
             cols[3].download_button(
                 "Exportar TXT",
@@ -358,15 +444,15 @@ def show_editor_view() -> None:
     if current_step > 1:
         if cols[0].button("Anterior"):
             st.session_state.editor_step -= 1
-            st.experimental_rerun()
+            st.rerun()
     if current_step == total_steps:
         if cols[1].button("Guardar ATO"):
             save_current_ato()
-            st.experimental_rerun()
+            st.rerun()
     else:
         if cols[2].button("Siguiente"):
             st.session_state.editor_step += 1
-            st.experimental_rerun()
+            st.rerun()
 
 
 def main() -> None:

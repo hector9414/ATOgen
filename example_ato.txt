@@ -1,9 +1,8 @@
-MSGID/ATO/CONFIDENCIAL//
-OPER/CENTINELA//
-TITLE/Operación Centinela//
-ORIG/JFACC//
-DTG/010600ZAPR24-011800ZAPR24//
-RMKS/ATO de demostración generada para el MVP.//
+OPER/505TH TRS TRAINING//
+MSGID/ATO/WILLIAMS/ATORG/APR/CHG//
+AKNLDG/NO//
+TIMEFRAM/FROM:010600ZAPR2024/TO:011800ZAPR2024//
+HEADING/TASKING//
 //RESOURCES
 RESASSET/KC-135;2;Reabastecimiento;Disponible en modo alerta T+60//
 RESASSET/F-16 Block 50;6;SEAD;Configuración AGM-88//
@@ -20,4 +19,4 @@ CONTROLA/AEW;SKYNET;FREQ:321.0;POC:SKYNET;NOTES:Cobertura E-3//
 //SPINS
 NARR/ROZ CENTINELA:Mantener FL250-280 reservados para tanker.//
 NARR/IFF:Modo 4 clave delta.//
-DECL/CONFIDENCIAL;AUTH:Comandante JFACC;PREP:ATO Cell;REL:Distribución limitada a unidades asignadas.//
+DECL/AUTH:Comandante JFACC;PREP:ATO Cell;REL:Distribución limitada a unidades asignadas.//

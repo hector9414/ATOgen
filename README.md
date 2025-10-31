@@ -8,7 +8,7 @@ Generador y editor de Air Tasking Orders (ATO) construido con Streamlit. Este MV
 - Editor paso a paso para capturar todos los bloques doctrinales del ATO.
 - Gestión de múltiples Task Units, recursos de Allotment y elementos de Support/Control.
 - Persistencia local basada en JSON sin necesidad de servicios externos.
-- Validación básica de campos obligatorios y formato ISO 8601 para fechas UTC.
+- Validación básica de campos obligatorios y formato doctrinal DDHHmmZMMMYYYY para el bloque TIMEFRAM.
 - Exportación del ATO a texto tipo USMTF y descarga del JSON completo con un clic.
 - Ejemplos incluidos (`example_ato.json` y `example_ato.txt`).
 

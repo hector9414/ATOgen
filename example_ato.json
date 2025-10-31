@@ -2,13 +2,16 @@
   "id": "example-ato-001",
   "name": "ATO Ejemplo",
   "header": {
-    "title": "Operación Centinela",
-    "classification": "CONFIDENCIAL",
-    "operation_name": "CENTINELA",
-    "effective_time_utc": "2024-04-01T06:00",
-    "expiry_time_utc": "2024-04-01T18:00",
-    "originating_unit": "JFACC",
-    "remarks": "ATO de demostración generada para el MVP."
+    "operation_identification_data": "505TH TRS TRAINING",
+    "msg_text_format_identifier": "ATO",
+    "msg_originator": "WILLIAMS",
+    "msg_serial": "ATORG",
+    "msg_month": "APR",
+    "msg_qualifier": "CHG",
+    "acknowledgement_required": "NO",
+    "timeframe_from": "010600ZAPR2024",
+    "timeframe_to": "011800ZAPR2024",
+    "heading": "TASKING"
   },
   "allotments": [
     {

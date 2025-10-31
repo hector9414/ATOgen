@@ -22,15 +22,23 @@ def export_ato_to_text(ato: ATO) -> str:
     """Convert an ATO into a simplified USMTF-like representation."""
     lines: List[str] = []
     header = ato.header
-    lines.append(f"MSGID/ATO/{header.classification.upper() or 'UNCLAS'}//")
-    lines.append(f"OPER/{header.operation_name or ato.name}//")
-    lines.append(f"TITLE/{header.title or ato.name}//")
-    lines.append(f"ORIG/{header.originating_unit or 'N/A'}//")
+    lines.append(f"OPER/{header.operation_identification_data or ato.name}//")
+    msgid_parts = [
+        header.msg_text_format_identifier or "ATO",
+        header.msg_originator or "UNKNOWN",
+        header.msg_serial or "000",
+        (header.msg_month or "JAN").upper(),
+        header.msg_qualifier or "",
+    ]
+    msgid_formatted = "/".join(part for part in msgid_parts if part)
+    lines.append(f"MSGID/{msgid_formatted}//")
+    lines.append(f"AKNLDG/{(header.acknowledgement_required or 'NO').upper()}//")
     lines.append(
-        f"DTG/{_format_dt(header.effective_time_utc)}-{_format_dt(header.expiry_time_utc)}//"
+        "TIMEFRAM/"
+        f"FROM:{header.timeframe_from or 'NA'}"
+        f"/TO:{header.timeframe_to or 'NA'}//"
     )
-    if header.remarks:
-        lines.append(f"RMKS/{header.remarks}//")
+    lines.append(f"HEADING/{(header.heading or 'TASKING').upper()}//")
 
     if ato.allotments:
         lines.append("//RESOURCES")
@@ -86,7 +94,6 @@ def export_ato_to_text(ato: ATO) -> str:
     footer = ato.footer
     lines.append(
         "DECL/"
-        f"{footer.classification or header.classification};"
         f"AUTH:{footer.authority or 'N/A'};"
         f"PREP:{footer.prepared_by or 'N/A'};"
         f"REL:{footer.release_instructions or 'N/A'}//"

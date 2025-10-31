@@ -9,20 +9,54 @@ import uuid
 
 @dataclass
 class Header:
-    title: str = ""
-    classification: str = ""
-    operation_name: str = ""
-    effective_time_utc: str = ""
-    expiry_time_utc: str = ""
-    originating_unit: str = ""
-    remarks: str = ""
+    operation_identification_data: str = ""
+    msg_text_format_identifier: str = "ATO"
+    msg_originator: str = ""
+    msg_serial: str = ""
+    msg_month: str = "JAN"
+    msg_qualifier: str = ""
+    acknowledgement_required: str = "NO"
+    timeframe_from: str = ""
+    timeframe_to: str = ""
+    heading: str = "TASKING"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Header":
-        return cls(**data)
+        if not data:
+            return cls()
+        mapped: Dict[str, Any] = {}
+        mapped["operation_identification_data"] = data.get(
+            "operation_identification_data",
+            data.get("operation_name", ""),
+        )
+        mapped["msg_text_format_identifier"] = data.get("msg_text_format_identifier", data.get("title", "ATO"))
+        mapped["msg_originator"] = data.get("msg_originator", data.get("originating_unit", ""))
+        mapped["msg_serial"] = data.get("msg_serial", "")
+        mapped["msg_month"] = (data.get("msg_month") or "JAN").upper()
+        mapped["msg_qualifier"] = data.get("msg_qualifier", "")
+        mapped["acknowledgement_required"] = (
+            data.get("acknowledgement_required", "NO") or "NO"
+        ).upper()
+
+        def _convert_iso(value: str | None) -> str:
+            if not value:
+                return ""
+            try:
+                return datetime.fromisoformat(value).strftime("%d%H%MZ%b%Y").upper()
+            except ValueError:
+                return value
+
+        mapped["timeframe_from"] = data.get("timeframe_from") or _convert_iso(
+            data.get("effective_time_utc")
+        )
+        mapped["timeframe_to"] = data.get("timeframe_to") or _convert_iso(
+            data.get("expiry_time_utc")
+        )
+        mapped["heading"] = data.get("heading", "TASKING")
+        return cls(**mapped)
 
 
 @dataclass
@@ -152,19 +186,42 @@ class ATO:
         errors: List[str] = []
         if not self.name.strip():
             errors.append("El nombre del ATO es obligatorio.")
-        if not self.header.classification.strip():
-            errors.append("La clasificación del header es obligatoria.")
-        if not self.header.operation_name.strip():
-            errors.append("El nombre de la operación en el header es obligatorio.")
+        if not self.header.operation_identification_data.strip():
+            errors.append("El campo OPER es obligatorio en el header.")
+        if not self.header.msg_text_format_identifier.strip():
+            errors.append("El campo MSGID - Text Format Identifier es obligatorio.")
+        if not self.header.msg_originator.strip():
+            errors.append("El campo MSGID - Originator es obligatorio.")
+        if not self.header.msg_serial.strip():
+            errors.append("El campo MSGID - Message Serial es obligatorio.")
+        if self.header.msg_month.upper() not in {
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AUG",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DEC",
+        }:
+            errors.append("El campo MSGID - Month debe seleccionarse de la lista proporcionada.")
+        if self.header.acknowledgement_required.upper() not in {"YES", "NO"}:
+            errors.append("El campo AKNLDG debe ser 'YES' o 'NO'.")
         for label, value in (
-            ("Inicio (UTC)", self.header.effective_time_utc),
-            ("Fin (UTC)", self.header.expiry_time_utc),
+            ("TIMEFRAM - FROM", self.header.timeframe_from),
+            ("TIMEFRAM - TO", self.header.timeframe_to),
         ):
             if value:
                 try:
-                    datetime.fromisoformat(value)
+                    datetime.strptime(value, "%d%H%MZ%b%Y")
                 except ValueError:
-                    errors.append(f"La fecha '{label}' debe estar en formato ISO 8601 (YYYY-MM-DDTHH:MM).")
+                    errors.append(
+                        f"La fecha '{label}' debe estar en formato DDHHmmZMMMYYYY (ej. 060600ZMAR2002)."
+                    )
             else:
                 errors.append(f"La fecha '{label}' es obligatoria.")
         for idx, task_unit in enumerate(self.task_units, start=1):
