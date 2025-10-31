@@ -1,0 +1,92 @@
+{
+  "id": "example-ato-001",
+  "name": "ATO Ejemplo",
+  "header": {
+    "operation_identification_data": "505TH TRS TRAINING",
+    "msg_text_format_identifier": "ATO",
+    "msg_originator": "WILLIAMS",
+    "msg_serial": "ATORG",
+    "msg_month": "APR",
+    "msg_qualifier": "CHG",
+    "acknowledgement_required": "NO",
+    "timeframe_from": "010600ZAPR2024",
+    "timeframe_to": "011800ZAPR2024",
+    "heading": "TASKING"
+  },
+  "allotments": [
+    {
+      "id": "resasset-53fs",
+      "unit_designator": "53 FS",
+      "icao_base_code": "KCDC",
+      "asset_count": "017",
+      "aircraft_type_model": "F16C"
+    },
+    {
+      "id": "resasset-111fs",
+      "unit_designator": "111 FS",
+      "icao_base_code": "SKPQ",
+      "asset_count": "004",
+      "aircraft_type_model": "KFIR"
+    }
+  ],
+  "task_units": [
+    {
+      "allotment_id": "resasset-53fs",
+      "mission_type": "SEAD",
+      "callsign": "AGL11",
+      "tail_numbers": "FA-101/FA-102",
+      "iff_code": "5201",
+      "target": "OBJETIVO ALFA",
+      "control_agency": "CRC CONDOR",
+      "takeoff_time_utc": "2024-04-01T07:30",
+      "remarks": "Paquete líder.",
+      "unit_name": "53 FS",
+      "aircraft_type": "F16C"
+    },
+    {
+      "allotment_id": "resasset-111fs",
+      "mission_type": "ESCORT",
+      "callsign": "HLC21",
+      "tail_numbers": "FB-210/FB-211",
+      "iff_code": "5210",
+      "target": "OBJETIVO ALFA",
+      "control_agency": "AEW SKYNET",
+      "takeoff_time_utc": "2024-04-01T07:45",
+      "remarks": "Escolta agresiva.",
+      "unit_name": "111 FS",
+      "aircraft_type": "KFIR"
+    }
+  ],
+  "support_control": [
+    {
+      "role": "CRC",
+      "unit": "CRC CONDOR",
+      "frequency": "291.5",
+      "contact": "CONDOR",
+      "notes": "Activa desde H-1"
+    },
+    {
+      "role": "AEW",
+      "unit": "SKYNET",
+      "frequency": "321.0",
+      "contact": "SKYNET",
+      "notes": "Cobertura E-3"
+    }
+  ],
+  "spins": [
+    {
+      "title": "ROZ CENTINELA",
+      "content": "Mantener FL250-280 reservados para tanker."
+    },
+    {
+      "title": "IFF",
+      "content": "Modo 4 clave delta."
+    }
+  ],
+  "footer": {
+    "classification": "CONFIDENCIAL",
+    "authority": "Comandante JFACC",
+    "prepared_by": "ATO Cell",
+    "release_instructions": "Distribución limitada a unidades asignadas."
+  }
+}
