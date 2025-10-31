@@ -1,21 +1,9 @@
 """Utilities to export an ATO to a USMTF-like plain text format."""
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Dict, List
 
 from .models import ATO, Allotment
-
-
-def _format_dt(dt_str: str) -> str:
-    """Format ISO date strings as DTG blocks."""
-    if not dt_str:
-        return ""
-    try:
-        dt = datetime.fromisoformat(dt_str)
-    except ValueError:
-        return dt_str
-    return dt.strftime("%d%H%MZ%b%y").upper()
 
 
 def export_ato_to_text(ato: ATO) -> str:
@@ -52,39 +40,85 @@ def export_ato_to_text(ato: ATO) -> str:
         for unit in ato.task_units:
             selected_allotment = allotment_lookup.get(unit.allotment_id)
             if selected_allotment:
-                resource_fragment = selected_allotment.formatted_fragment()
+                unit_name = selected_allotment.unit_designator or "NA"
+                icao = (selected_allotment.icao_base_code or "NA").upper()
+                aircraft_type = selected_allotment.aircraft_type_model or "NA"
+                asset_count = selected_allotment.asset_count or "NA"
             else:
-                unit_fragment = unit.unit_name or "NA"
-                aircraft_fragment = unit.aircraft_type or "NA"
-                resource_fragment = f"UNIT:{unit_fragment}/ACTYP:{aircraft_fragment}"
-            tu_segments = [
-                resource_fragment,
-                f"MSN:{unit.mission_type or 'NA'}",
-                f"CALL:{unit.callsign or 'NA'}",
+                unit_name = unit.unit_name or "NA"
+                icao = "NA"
+                aircraft_type = unit.aircraft_type or "NA"
+                asset_count = "NA"
+
+            lines.append(f"TASKUNIT/{unit_name}/ICAO:{icao}//")
+
+            amsndat = unit.amsndat
+            msnacft = unit.msnacft
+            gtgtloc = unit.gtgtloc
+            controla = unit.controla
+
+            amsndat_parts = [
+                amsndat.mission_number or "-",
+                amsndat.amc_mission_number or "-",
+                amsndat.package_identification or "-",
+                amsndat.mission_commander or "-",
+                amsndat.primary_mission_type or "-",
+                amsndat.secondary_mission_type or "-",
+                amsndat.alert_status or "-",
+                f"DEPLOC:{(amsndat.icao_departure_location or '-').upper()}",
+                f"ARRLOC:{(amsndat.icao_recovery_base or '-').upper()}",
             ]
-            lines.append("TASKUNIT/" + "/".join(tu_segments) + "//")
-            lines.append(
-                "AMSNDAT/"
-                + ";".join(
-                    [
-                        f"TAIL:{unit.tail_numbers or 'NA'}",
-                        f"IFF:{unit.iff_code or 'NA'}",
-                        f"TKOF:{_format_dt(unit.takeoff_time_utc) or 'NA'}",
-                    ]
-                )
-                + "//"
-            )
-            lines.append(
-                "GTGTLOC/"
-                + ";".join(
-                    [
-                        f"TARGET:{unit.target or 'NA'}",
-                        f"CONTROL:{unit.control_agency or 'NA'}",
-                        f"RMK:{unit.remarks or 'NA'}",
-                    ]
-                )
-                + "//"
-            )
+            lines.append("AMSNDAT/" + "/".join(amsndat_parts) + "//")
+
+            if not msnacft.number_of_aircraft:
+                aircraft_count_fragment = asset_count or "-"
+            else:
+                aircraft_count_fragment = msnacft.number_of_aircraft
+
+            def _iff_fragment(prefix: str, value: str) -> str:
+                return f"{prefix}{value}" if value else "-"
+
+            msnacft_parts = [
+                aircraft_count_fragment or "-",
+                f"ACTYP:{aircraft_type or 'NA'}",
+                msnacft.aircraft_call_sign or "-",
+                msnacft.primary_configuration_code or "-",
+                msnacft.secondary_configuration_code or "-",
+                _iff_fragment("1", msnacft.iff_mode1),
+                _iff_fragment("2", msnacft.iff_mode2),
+                _iff_fragment("3", msnacft.iff_mode3),
+            ]
+            lines.append("MSNACFT/" + "/".join(msnacft_parts) + "//")
+
+            gtgtloc_parts = [
+                gtgtloc.designator or "-",
+                gtgtloc.day_time_month_tasked or "-",
+                f"NET:{(gtgtloc.not_earlier_than or '-').upper()}",
+                f"NLT:{(gtgtloc.not_later_than or '-').upper()}",
+                gtgtloc.target_facility_name or "-",
+                f"ID:{gtgtloc.target_identifier or '-'}",
+                gtgtloc.target_type or "-",
+                gtgtloc.dmpi_description or "-",
+                f"DMPID:{gtgtloc.dmpi_lat_long or '-'}",
+                gtgtloc.geodetic_datum or "-",
+                gtgtloc.dmpi_elevation or "-",
+                gtgtloc.component_target_identifier or "-",
+            ]
+            lines.append("GTGTLOC/" + "/".join(gtgtloc_parts) + "//")
+
+            controla_parts = [
+                controla.agency_type or "-",
+                controla.call_sign or "-",
+                f"PFREQ:{controla.primary_frequency or '-'}",
+                f"SFREQ:{controla.secondary_frequency or '-'}",
+                f"NAME:{controla.report_in_point or '-'}",
+            ]
+            lines.append("CONTROLA/" + "/".join(controla_parts) + "//")
+
+            if unit.amplification:
+                lines.append(f"AMPN/{unit.amplification}//")
+            if unit.narrative:
+                lines.append(f"NARR/{unit.narrative}//")
 
     if ato.support_control:
         lines.append("//SUPPORT")

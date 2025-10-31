@@ -63,6 +63,16 @@ Cada ATO puede exportarse en dos formatos:
 - **TXT**: estructura USMTF simplificada generada por `app/exporter.py`.
 - **JSON**: representación completa del objeto ATO.
 
+### Segmentos doctrinales de Task Unit
+
+El paso 3 del editor captura todos los bloques exigidos para cada **TASKUNIT**:
+
+- **AMSNDAT (Aircraft Mission Data)**: números de misión, comandante, tipos de misión primario/secundario (lista completa con búsqueda) y bases ICAO de salida/recuperación (formato DDHHmmZMMM para las ventanas NET/NLT).
+- **MSNACFT (Individual Aircraft Mission Data)**: cantidad de aeronaves, ACTYP heredado del RESASSET, indicativo, configuraciones y códigos IFF/SIF (el sistema antepone automáticamente los prefijos 1/2/3 al exportar).
+- **GTGTLOC (Ground Target Location)**: designador P/S, ventanas NET/NLT en formato DDHHmmZMMM, identificadores/DMPI y metadatos del objetivo.
+- **CONTROLA (Control of Air Assets)**: tipo de agencia (CRC/AEW), indicativo y frecuencias primarias/secundarias.
+- **AMPN / NARR**: texto libre para amplificaciones y narrativas complementarias.
+
 ## Datos de ejemplo
 
 Se incluye `example_ato.json` con una misión ficticia. Puede cargarse copiando su contenido en `data/atos.json` (como único elemento de la lista) o creándose manualmente desde la interfaz. El archivo `example_ato.txt` muestra el resultado de la exportación del mismo ATO.

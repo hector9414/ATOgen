@@ -32,27 +32,97 @@
   "task_units": [
     {
       "allotment_id": "resasset-53fs",
-      "mission_type": "SEAD",
-      "callsign": "AGL11",
-      "tail_numbers": "FA-101/FA-102",
-      "iff_code": "5201",
-      "target": "OBJETIVO ALFA",
-      "control_agency": "CRC CONDOR",
-      "takeoff_time_utc": "2024-04-01T07:30",
-      "remarks": "Paquete líder.",
+      "amsndat": {
+        "mission_number": "2001",
+        "amc_mission_number": "-",
+        "package_identification": "PKG-21",
+        "mission_commander": "MAJ RAMIREZ",
+        "primary_mission_type": "OCA",
+        "secondary_mission_type": "ESC",
+        "alert_status": "ALERT-1",
+        "icao_departure_location": "KCDC",
+        "icao_recovery_base": "KCDC"
+      },
+      "msnacft": {
+        "number_of_aircraft": "2",
+        "aircraft_call_sign": "KNIGHT01",
+        "primary_configuration_code": "2G12X2M832A2",
+        "secondary_configuration_code": "-",
+        "iff_mode1": "01",
+        "iff_mode2": "2001",
+        "iff_mode3": "2001"
+      },
+      "gtgtloc": {
+        "designator": "P",
+        "day_time_month_tasked": "-",
+        "not_earlier_than": "060900ZMAR",
+        "not_later_than": "060905ZMAR",
+        "target_facility_name": "RED BLUFF AFLD",
+        "target_identifier": "0992-00101DD001",
+        "target_type": "-",
+        "dmpi_description": "DISPERSAL AREAS",
+        "dmpi_lat_long": "400948.0N1221406.0W",
+        "geodetic_datum": "-",
+        "dmpi_elevation": "E00473",
+        "component_target_identifier": "-"
+      },
+      "controla": {
+        "agency_type": "CRC",
+        "call_sign": "SLAPSTICK",
+        "primary_frequency": "122.0",
+        "secondary_frequency": "331.0",
+        "report_in_point": "AWACSS"
+      },
+      "amplification": "CONTROL TASKUNIT: 728 ACS",
+      "narrative": "POC/OVERFIELD/LT COL/728 ACS/-/TEL:8643298",
       "unit_name": "53 FS",
       "aircraft_type": "F16C"
     },
     {
       "allotment_id": "resasset-111fs",
-      "mission_type": "ESCORT",
-      "callsign": "HLC21",
-      "tail_numbers": "FB-210/FB-211",
-      "iff_code": "5210",
-      "target": "OBJETIVO ALFA",
-      "control_agency": "AEW SKYNET",
-      "takeoff_time_utc": "2024-04-01T07:45",
-      "remarks": "Escolta agresiva.",
+      "amsndat": {
+        "mission_number": "2010",
+        "amc_mission_number": "-",
+        "package_identification": "PKG-21",
+        "mission_commander": "CPT PEREZ",
+        "primary_mission_type": "ESC",
+        "secondary_mission_type": "SEAD",
+        "alert_status": "ALERT-2",
+        "icao_departure_location": "SKPQ",
+        "icao_recovery_base": "SKPQ"
+      },
+      "msnacft": {
+        "number_of_aircraft": "4",
+        "aircraft_call_sign": "HERO21",
+        "primary_configuration_code": "FANG",
+        "secondary_configuration_code": "-",
+        "iff_mode1": "02",
+        "iff_mode2": "2100",
+        "iff_mode3": "2100"
+      },
+      "gtgtloc": {
+        "designator": "S",
+        "day_time_month_tasked": "-",
+        "not_earlier_than": "060915ZMAR",
+        "not_later_than": "060945ZMAR",
+        "target_facility_name": "OBJETIVO ALFA",
+        "target_identifier": "OBJ-ALFA",
+        "target_type": "AIR DEFENSE",
+        "dmpi_description": "THREAT RADAR",
+        "dmpi_lat_long": "041500.0N0740412.0W",
+        "geodetic_datum": "WGS84",
+        "dmpi_elevation": "E00520",
+        "component_target_identifier": "RAD-02"
+      },
+      "controla": {
+        "agency_type": "AEW",
+        "call_sign": "SKYNET",
+        "primary_frequency": "287.5",
+        "secondary_frequency": "331.0",
+        "report_in_point": "VECTOR"
+      },
+      "amplification": "Escort para paquete KNIGHT",
+      "narrative": "Coordinar push con tanker GOLIATH",
       "unit_name": "111 FS",
       "aircraft_type": "KFIR"
     }
