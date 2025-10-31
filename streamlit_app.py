@@ -10,8 +10,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import streamlit as st
 
-from app.exporter import export_ato_to_text
-from app.models import ATO, MISSION_TYPE_OPTIONS
+from app.exporter import export_ato_to_text, format_task_unit
+from app.models import ATO, Allotment, MISSION_TYPE_OPTIONS, TaskUnit
 from app.storage import ATOStorage
 
 DATA_PATH = Path("data/atos.json")
@@ -371,6 +371,8 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
 
         callsign_preview = msnacft.get("aircraft_call_sign") or entry.get("callsign") or "Sin callsign"
         with st.expander(f"Task Unit #{idx + 1}: {callsign_preview}", expanded=False):
+            st.markdown("#### TASKUNIT · Asignación de recurso")
+            selected_allotment_model: Allotment | None = None
             if option_ids:
                 current_id = entry.get("allotment_id")
                 if current_id not in option_ids:
@@ -387,6 +389,7 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
                     (item for item in allotments if item.get("id") == selected_id), None
                 )
                 if selected_allotment:
+                    selected_allotment_model = Allotment.from_dict(selected_allotment)
                     entry["unit_name"] = selected_allotment.get("unit_designator", "")
                     entry["aircraft_type"] = selected_allotment.get("aircraft_type_model", "")
                     if not msnacft.get("number_of_aircraft"):
@@ -654,6 +657,11 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
                 value=entry.get("narrative", ""),
                 key=f"tu_narr_{idx}",
             )
+
+            preview_unit = TaskUnit.from_dict(entry)
+            preview_lines = format_task_unit(preview_unit, selected_allotment_model)
+            st.markdown("#### Vista previa doctrinal")
+            st.code("\n".join(preview_lines), language="text")
 
             if st.button("Eliminar Task Unit", key=f"tu_del_{idx}"):
                 task_units.pop(idx)
