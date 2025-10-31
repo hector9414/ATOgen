@@ -1,7 +1,7 @@
 """Data models for representing Air Tasking Orders (ATO)."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, fields
 from datetime import datetime
 from typing import List, Dict, Any
 import uuid
@@ -61,38 +61,88 @@ class Header:
 
 @dataclass
 class Allotment:
-    resource_name: str = ""
-    quantity: str = ""
-    mission: str = ""
-    remarks: str = ""
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    unit_designator: str = ""
+    icao_base_code: str = ""
+    asset_count: str = ""
+    aircraft_type_model: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
+    def formatted_fragment(self) -> str:
+        unit = self.unit_designator or "NA"
+        icao = (self.icao_base_code or "NA").upper()
+        count = self.asset_count or "NA"
+        aircraft = self.aircraft_type_model or "NA"
+        return f"UNIT:{unit}/ICAO:{icao}/{count}/ACTYP:{aircraft}"
+
+    def display_label(self) -> str:
+        return (
+            f"{self.unit_designator or 'Sin unidad'} · "
+            f"{self.asset_count or '0'}x {self.aircraft_type_model or 'ACTYP'} "
+            f"({(self.icao_base_code or '----').upper()})"
+        )
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Allotment":
-        return cls(**data)
+        if not data:
+            return cls()
+        if "id" not in data:
+            data = {**data, "id": str(uuid.uuid4())}
+        mapped: Dict[str, Any] = {}
+        mapped["id"] = data.get("id", str(uuid.uuid4()))
+        mapped["unit_designator"] = data.get("unit_designator") or data.get("resource_name", "")
+        mapped["icao_base_code"] = (
+            (data.get("icao_base_code") or data.get("icao", "") or "").upper()
+        )
+        raw_count = (
+            data.get("asset_count")
+            or data.get("count_of_assets")
+            or data.get("quantity", "")
+        )
+        mapped["asset_count"] = str(raw_count).strip() if raw_count not in (None, "") else ""
+        raw_aircraft = (
+            data.get("aircraft_type_model")
+            or data.get("aircraft_type")
+            or data.get("mission", "")
+        )
+        mapped["aircraft_type_model"] = str(raw_aircraft).strip() if raw_aircraft not in (None, "") else ""
+        return cls(**mapped)
 
 
 @dataclass
 class TaskUnit:
-    unit_name: str = ""
+    allotment_id: str = ""
     mission_type: str = ""
     callsign: str = ""
-    aircraft_type: str = ""
     tail_numbers: str = ""
     iff_code: str = ""
     target: str = ""
     control_agency: str = ""
     takeoff_time_utc: str = ""
     remarks: str = ""
+    # Legacy fields kept for backward compatibility with previous schema.
+    unit_name: str = ""
+    aircraft_type: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TaskUnit":
-        return cls(**data)
+        if not data:
+            return cls()
+        mapped: Dict[str, Any] = {**data}
+        mapped.setdefault("allotment_id", mapped.get("resource_id", ""))
+        mapped.setdefault("unit_name", mapped.get("unit_name", ""))
+        mapped.setdefault("aircraft_type", mapped.get("aircraft_type", ""))
+        allowed_fields = {item.name for item in fields(cls)}
+        sanitized: Dict[str, Any] = {}
+        for field_name in allowed_fields:
+            value = mapped.get(field_name, "")
+            sanitized[field_name] = value if value is not None else ""
+        return cls(**sanitized)
 
 
 @dataclass
@@ -224,7 +274,32 @@ class ATO:
                     )
             else:
                 errors.append(f"La fecha '{label}' es obligatoria.")
+        allotment_ids = {item.id for item in self.allotments}
+        for idx, allotment in enumerate(self.allotments, start=1):
+            if not allotment.unit_designator.strip():
+                errors.append(f"El Allotment #{idx} requiere UNIT.")
+            if not allotment.icao_base_code.strip():
+                errors.append(f"El Allotment #{idx} requiere ICAO.")
+            elif allotment.icao_base_code != allotment.icao_base_code.upper():
+                errors.append(f"El ICAO del Allotment #{idx} debe estar en mayúsculas.")
+            if not allotment.asset_count.strip():
+                errors.append(f"El Allotment #{idx} requiere la cantidad de activos.")
+            elif not allotment.asset_count.isdigit():
+                errors.append(
+                    f"El campo COUNT OF ASSETS del Allotment #{idx} debe ser numérico."
+                )
+            if not allotment.aircraft_type_model.strip():
+                errors.append(f"El Allotment #{idx} requiere ACTYP.")
+
         for idx, task_unit in enumerate(self.task_units, start=1):
+            if not task_unit.allotment_id.strip():
+                errors.append(
+                    f"La Task Unit #{idx} debe vincularse a un recurso definido en Allotment."
+                )
+            elif task_unit.allotment_id not in allotment_ids:
+                errors.append(
+                    f"La Task Unit #{idx} referencia un Allotment inexistente. Actualiza la selección."
+                )
             if not task_unit.mission_type.strip():
                 errors.append(f"La Task Unit #{idx} debe incluir un tipo de misión.")
             if not task_unit.callsign.strip():

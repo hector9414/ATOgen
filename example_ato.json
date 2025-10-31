@@ -15,42 +15,46 @@
   },
   "allotments": [
     {
-      "resource_name": "KC-135",
-      "quantity": "2",
-      "mission": "Reabastecimiento",
-      "remarks": "Disponible en modo alerta T+60"
+      "id": "resasset-53fs",
+      "unit_designator": "53 FS",
+      "icao_base_code": "KCDC",
+      "asset_count": "017",
+      "aircraft_type_model": "F16C"
     },
     {
-      "resource_name": "F-16 Block 50",
-      "quantity": "6",
-      "mission": "SEAD",
-      "remarks": "Configuración AGM-88"
+      "id": "resasset-111fs",
+      "unit_designator": "111 FS",
+      "icao_base_code": "SKPQ",
+      "asset_count": "004",
+      "aircraft_type_model": "KFIR"
     }
   ],
   "task_units": [
     {
-      "unit_name": "Escuadrón Aguila",
-      "mission_type": "OCA",
+      "allotment_id": "resasset-53fs",
+      "mission_type": "SEAD",
       "callsign": "AGL11",
-      "aircraft_type": "F-16C",
       "tail_numbers": "FA-101/FA-102",
       "iff_code": "5201",
       "target": "OBJETIVO ALFA",
       "control_agency": "CRC CONDOR",
       "takeoff_time_utc": "2024-04-01T07:30",
-      "remarks": "Paquete lider."
+      "remarks": "Paquete líder.",
+      "unit_name": "53 FS",
+      "aircraft_type": "F16C"
     },
     {
-      "unit_name": "Escuadrón Halcón",
+      "allotment_id": "resasset-111fs",
       "mission_type": "ESCORT",
       "callsign": "HLC21",
-      "aircraft_type": "F-18",
       "tail_numbers": "FB-210/FB-211",
       "iff_code": "5210",
       "target": "OBJETIVO ALFA",
       "control_agency": "AEW SKYNET",
       "takeoff_time_utc": "2024-04-01T07:45",
-      "remarks": "Escolta agresiva."
+      "remarks": "Escolta agresiva.",
+      "unit_name": "111 FS",
+      "aircraft_type": "KFIR"
     }
   ],
   "support_control": [

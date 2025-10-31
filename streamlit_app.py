@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime, date, time
@@ -204,26 +205,57 @@ def _render_allotments_step(data: Dict[str, Any]) -> None:
     if not allotments:
         st.info("No hay recursos definidos todavía.")
     for idx, entry in enumerate(list(allotments)):
-        with st.expander(
-            f"Recurso #{idx + 1}: {entry.get('resource_name') or 'Sin nombre'}", expanded=False
-        ):
-            entry["resource_name"] = st.text_input(
-                "Nombre del recurso", value=entry.get("resource_name", ""), key=f"allot_name_{idx}"
+        entry.setdefault("id", str(uuid.uuid4()))
+        entry.setdefault("unit_designator", entry.get("resource_name", ""))
+        entry.setdefault("icao_base_code", entry.get("icao", ""))
+        entry.setdefault("asset_count", entry.get("quantity", ""))
+        entry.setdefault("aircraft_type_model", entry.get("aircraft_type", ""))
+        title = entry.get("unit_designator") or "Sin unidad"
+        with st.expander(f"Recurso #{idx + 1}: {title}", expanded=False):
+            entry["unit_designator"] = st.text_input(
+                "TASKED UNIT DESIGNATOR (UNIT)",
+                value=entry.get("unit_designator", ""),
+                key=f"allot_unit_{idx}",
             )
-            entry["quantity"] = st.text_input(
-                "Cantidad", value=entry.get("quantity", ""), key=f"allot_qty_{idx}"
+            entry["icao_base_code"] = st.text_input(
+                "ICAO BASE CODE (ICAO)",
+                value=entry.get("icao_base_code", ""),
+                key=f"allot_icao_{idx}",
+                help="Utiliza el código ICAO en mayúsculas.",
+            ).upper()
+            entry["asset_count"] = st.text_input(
+                "COUNT OF ASSETS",
+                value=str(entry.get("asset_count", "")),
+                key=f"allot_count_{idx}",
+                help="Debe ser un valor numérico. Se preservan ceros a la izquierda si se requieren.",
+            ).strip()
+            entry["aircraft_type_model"] = st.text_input(
+                "AIRCRAFT TYPE AND MODEL (ACTYP)",
+                value=entry.get("aircraft_type_model", ""),
+                key=f"allot_actyp_{idx}",
             )
-            entry["mission"] = st.text_input(
-                "Misión asociada", value=entry.get("mission", ""), key=f"allot_msn_{idx}"
+            if entry["asset_count"] and not str(entry["asset_count"]).isdigit():
+                st.warning("COUNT OF ASSETS debe ser numérico.")
+            preview = (
+                f"RESASSET/UNIT:{entry.get('unit_designator') or 'NA'}"
+                f"/ICAO:{(entry.get('icao_base_code') or 'NA').upper()}"
+                f"/{entry.get('asset_count') or 'NA'}"
+                f"/ACTYP:{entry.get('aircraft_type_model') or 'NA'}//"
             )
-            entry["remarks"] = st.text_area(
-                "Observaciones", value=entry.get("remarks", ""), key=f"allot_rmks_{idx}"
-            )
+            st.code(preview)
             if st.button("Eliminar recurso", key=f"allot_del_{idx}"):
                 allotments.pop(idx)
                 st.rerun()
     if st.button("Agregar recurso", key="allot_add"):
-        allotments.append({"resource_name": "", "quantity": "", "mission": "", "remarks": ""})
+        allotments.append(
+            {
+                "id": str(uuid.uuid4()),
+                "unit_designator": "",
+                "icao_base_code": "",
+                "asset_count": "",
+                "aircraft_type_model": "",
+            }
+        )
         st.rerun()
 
 
@@ -231,23 +263,57 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
     st.markdown("### Paso 3 · Task Units")
     st.write("Configura las unidades asignadas con sus misiones específicas.")
     task_units: List[Dict[str, str]] = data.setdefault("task_units", [])
+    allotments: List[Dict[str, str]] = data.get("allotments", [])
+    option_ids = [entry.get("id") for entry in allotments if entry.get("id")]
+    option_labels = {
+        entry["id"]: (
+            f"UNIT:{entry.get('unit_designator') or 'NA'}"
+            f" / ICAO:{(entry.get('icao_base_code') or 'NA').upper()}"
+            f" / {entry.get('asset_count') or 'NA'} / ACTYP:{entry.get('aircraft_type_model') or 'NA'}"
+        )
+        for entry in allotments
+        if entry.get("id")
+    }
+    if not allotments:
+        st.warning("Define al menos un Allotment antes de configurar Task Units.")
     if not task_units:
         st.info("No hay Task Units registradas.")
     for idx, entry in enumerate(list(task_units)):
-        with st.expander(
-            f"Task Unit #{idx + 1}: {entry.get('callsign') or 'Sin callsign'}", expanded=False
-        ):
-            entry["unit_name"] = st.text_input(
-                "Unidad", value=entry.get("unit_name", ""), key=f"tu_unit_{idx}"
-            )
+        entry.setdefault("allotment_id", option_ids[0] if option_ids else "")
+        callsign = entry.get("callsign") or "Sin callsign"
+        with st.expander(f"Task Unit #{idx + 1}: {callsign}", expanded=False):
+            if option_ids:
+                current_id = entry.get("allotment_id")
+                if current_id not in option_ids:
+                    current_id = option_ids[0]
+                selected_id = st.selectbox(
+                    "REASSET asignado",
+                    options=option_ids,
+                    index=option_ids.index(current_id),
+                    format_func=lambda opt: option_labels.get(opt, opt),
+                    key=f"tu_allot_{idx}",
+                )
+                entry["allotment_id"] = selected_id
+                selected_allotment = next(
+                    (item for item in allotments if item.get("id") == selected_id), None
+                )
+                if selected_allotment:
+                    entry["unit_name"] = selected_allotment.get("unit_designator", "")
+                    entry["aircraft_type"] = selected_allotment.get("aircraft_type_model", "")
+                    summary = (
+                        f"UNIT: {selected_allotment.get('unit_designator') or 'NA'}\n"
+                        f"ICAO: {(selected_allotment.get('icao_base_code') or 'NA').upper()}\n"
+                        f"COUNT: {selected_allotment.get('asset_count') or 'NA'}\n"
+                        f"ACTYP: {selected_allotment.get('aircraft_type_model') or 'NA'}"
+                    )
+                    st.text(summary)
+            else:
+                st.error("No hay recursos en Allotment disponibles. Elimina esta Task Unit o crea un recurso.")
             entry["mission_type"] = st.text_input(
                 "Tipo de misión", value=entry.get("mission_type", ""), key=f"tu_mission_{idx}"
             )
             entry["callsign"] = st.text_input(
                 "Callsign", value=entry.get("callsign", ""), key=f"tu_callsign_{idx}"
-            )
-            entry["aircraft_type"] = st.text_input(
-                "Tipo de aeronave", value=entry.get("aircraft_type", ""), key=f"tu_aircraft_{idx}"
             )
             entry["tail_numbers"] = st.text_input(
                 "Matrículas", value=entry.get("tail_numbers", ""), key=f"tu_tail_{idx}"
@@ -273,21 +339,25 @@ def _render_task_units_step(data: Dict[str, Any]) -> None:
                 task_units.pop(idx)
                 st.rerun()
     if st.button("Agregar Task Unit", key="tu_add"):
-        task_units.append(
-            {
-                "unit_name": "",
-                "mission_type": "",
-                "callsign": "",
-                "aircraft_type": "",
-                "tail_numbers": "",
-                "iff_code": "",
-                "target": "",
-                "control_agency": "",
-                "takeoff_time_utc": "",
-                "remarks": "",
-            }
-        )
-        st.rerun()
+        if not option_ids:
+            st.warning("Primero debes crear un Allotment.")
+        else:
+            task_units.append(
+                {
+                    "allotment_id": option_ids[0],
+                    "mission_type": "",
+                    "callsign": "",
+                    "tail_numbers": "",
+                    "iff_code": "",
+                    "target": "",
+                    "control_agency": "",
+                    "takeoff_time_utc": "",
+                    "remarks": "",
+                    "unit_name": "",
+                    "aircraft_type": "",
+                }
+            )
+            st.rerun()
 
 
 def _render_support_step(data: Dict[str, Any]) -> None:
