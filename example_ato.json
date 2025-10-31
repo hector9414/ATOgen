@@ -1,0 +1,85 @@
+{
+  "id": "example-ato-001",
+  "name": "ATO Ejemplo",
+  "header": {
+    "title": "Operación Centinela",
+    "classification": "CONFIDENCIAL",
+    "operation_name": "CENTINELA",
+    "effective_time_utc": "2024-04-01T06:00",
+    "expiry_time_utc": "2024-04-01T18:00",
+    "originating_unit": "JFACC",
+    "remarks": "ATO de demostración generada para el MVP."
+  },
+  "allotments": [
+    {
+      "resource_name": "KC-135",
+      "quantity": "2",
+      "mission": "Reabastecimiento",
+      "remarks": "Disponible en modo alerta T+60"
+    },
+    {
+      "resource_name": "F-16 Block 50",
+      "quantity": "6",
+      "mission": "SEAD",
+      "remarks": "Configuración AGM-88"
+    }
+  ],
+  "task_units": [
+    {
+      "unit_name": "Escuadrón Aguila",
+      "mission_type": "OCA",
+      "callsign": "AGL11",
+      "aircraft_type": "F-16C",
+      "tail_numbers": "FA-101/FA-102",
+      "iff_code": "5201",
+      "target": "OBJETIVO ALFA",
+      "control_agency": "CRC CONDOR",
+      "takeoff_time_utc": "2024-04-01T07:30",
+      "remarks": "Paquete lider."
+    },
+    {
+      "unit_name": "Escuadrón Halcón",
+      "mission_type": "ESCORT",
+      "callsign": "HLC21",
+      "aircraft_type": "F-18",
+      "tail_numbers": "FB-210/FB-211",
+      "iff_code": "5210",
+      "target": "OBJETIVO ALFA",
+      "control_agency": "AEW SKYNET",
+      "takeoff_time_utc": "2024-04-01T07:45",
+      "remarks": "Escolta agresiva."
+    }
+  ],
+  "support_control": [
+    {
+      "role": "CRC",
+      "unit": "CRC CONDOR",
+      "frequency": "291.5",
+      "contact": "CONDOR",
+      "notes": "Activa desde H-1"
+    },
+    {
+      "role": "AEW",
+      "unit": "SKYNET",
+      "frequency": "321.0",
+      "contact": "SKYNET",
+      "notes": "Cobertura E-3"
+    }
+  ],
+  "spins": [
+    {
+      "title": "ROZ CENTINELA",
+      "content": "Mantener FL250-280 reservados para tanker."
+    },
+    {
+      "title": "IFF",
+      "content": "Modo 4 clave delta."
+    }
+  ],
+  "footer": {
+    "classification": "CONFIDENCIAL",
+    "authority": "Comandante JFACC",
+    "prepared_by": "ATO Cell",
+    "release_instructions": "Distribución limitada a unidades asignadas."
+  }
+}
